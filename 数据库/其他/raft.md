@@ -1,3 +1,3 @@
 # raft
-
-http://thesecretlivesofdata.com/raft/
+* https://raft.github.io/
+* http://thesecretlivesofdata.com/raft/
