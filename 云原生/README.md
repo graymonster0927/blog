@@ -5,5 +5,6 @@
 
 
 ### 目录
-* [1.docker](1.docker/1.docker.md)
-* [2.k8s](2.k8s/2.k8s.md)
+* [1.docker](1.docker/)
+* [2.k8s](2.k8s/)
+* [3.其他](其他/)
