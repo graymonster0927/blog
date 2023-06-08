@@ -18,7 +18,7 @@
 本地域名服务器(LDNS  比如软件服务商阿里云DNS等) -> 根域名服务器 -> 主域名服务器 -> 主域名服务器 -> 网站注册域名服务器
 > dig +trace @8.8.8.8 www.baidu.com
 [DNS解析过程详解](https://www.jianshu.com/p/38ac057179af)
-
+[DNS架构](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2008-R2-and-2008/dd197427(v=ws.10)?redirectedfrom=MSDN)
 ## 路由
 
 * （1）源主机在发起通信之前，将⾃⼰的IP地址与⽬的主机的IP地址进⾏⽐较，如果源主机判断⽬的主机与⾃⼰位于不同⽹段时，它需要通过⽹关来递交报⽂的，所以它⾸先需要通过⼀个ARP请求报⽂获取⽹关的MAC地址（在源主机不知道⽹关MAC地址的情形下, 可能在本机APR缓存中找到），即源主机先发送ARP请求帧以获取⽹关IP地址对应的MAC地址。  
