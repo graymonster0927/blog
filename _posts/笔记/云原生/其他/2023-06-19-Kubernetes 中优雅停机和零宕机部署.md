@@ -159,4 +159,5 @@ preStop hook 是 Pod LifeCycle hook 之一。
 
 如果我们的 Pod 运行诸如视频转码之类的长期任务，可以考虑使用 Rainbow 部署。在 Rainbow 部署中，我们会为每个发行版创建一个新的 Deployment，并在任务完成后删除上一个发行版。原文地址：https://learnk8s.io/graceful-shutdown
 
-# 全文拷贝自 -> https://www.cnblogs.com/cheyunhua/p/13646564.html
+# 全文拷贝
+[文章](https://www.cnblogs.com/cheyunhua/p/13646564.html)
