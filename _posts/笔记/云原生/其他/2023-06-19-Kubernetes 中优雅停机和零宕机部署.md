@@ -14,7 +14,7 @@ tags: [云原生]
 * 接下来的请求又如何呢？
 * 在讨论删除 Pod 时会发生什么之前，我们需要知道在创建 Pod 时会发生什么。假设我们在集群中创建了以下 Pod：
 
-![6(1).png](/commonts/云原生/其他/image/6(1).png)
+![6(1).png](/commons/云原生/其他/image/6(1).png)
 
 我们将Pod YAML 定义提交给集群：kubectl apply -f pod.yaml
 
@@ -61,7 +61,7 @@ kubelet 的工作是轮询控制平面以获取更新。kubelet 不会自行创�
 * targetPort：通过 Pod 端口接收流量。
 
 Service 的 YAML 定义如下：
-![6(2).png](/commonts/云原生/其他/image/6(2).png)
+![6(2).png](/commons/云原生/其他/image/6(2).png)
 
 
 我们使用 kubectl apply 将 Service 提交给集群时，Kubernetes 会找到所有和选择器（name: app）有着相同标签的 Pod，并收集其 IP 地址，当然它们需要先通过 Readiness 探针，然后再将每个 IP 地址都和端口连接在一起。如果 IP 地址是 10.0.0.3，targetPort 是 3000，Kubernetes 会将这两个值连接起来称为 endpoint。
@@ -73,7 +73,7 @@ endpoint 会存储在 etcd 的一个名为 Endpoint 的对象中。这里有点�
 
 Endpoint 对象是 Kubernetes 中的真实对象，对于每个 Service，Kubernetes 都会自动创建一个 Endpoint 对象。我们可以使用以下方法进行验证：
 
-![6(3).png](/commonts/云原生/其他/image/6(3).png)
+![6(3).png](/commons/云原生/其他/image/6(3).png)
 
 Endpoint 对象会从 Pod 中收集所有的 IP 地址和端口，而且不仅一次。在以下情况中，Endpoint 对象将更新一个 endpiont 新列表：
 
@@ -82,7 +82,7 @@ Endpoint 对象会从 Pod 中收集所有的 IP 地址和端口，而且不仅�
 * 在 Pod 上修改标签时。
 
 因此，每次在创建 Pod 并在 kubelet 将其 IP 地址发送到主节点后，Kubernetes 都会更新所有 endpoint：
-![6(4).png](/commonts/云原生/其他/image/6(4).png)
+![6(4).png](/commons/云原生/其他/image/6(4).png)
 
 endpoint 存储在控制平面中，Endpoint 对象也会更新。
 
@@ -93,7 +93,7 @@ endpoint 存储在控制平面中，Endpoint 对象也会更新。
 ### endpoint 被 Kubernetes 中的多个组件所使用。
 Kube-proxy 使用 endpoint 在节点上设置 iptables 规则。因此，每次对 Endpoint 对象进行更改时，kube-proxy 都会检索 IP 地址和 endpiont 新列表，以编写新的 iptables 规则。
 Ingress 控制器也使用相同的 endpiont 列表。Ingress 控制器是集群中将外部流量路由到集群中的组件。在设置 Ingress 列表时，我们通常将 Service 指定为目标：
-![6(5).png](/commonts/云原生/其他/image/6(5).png)
+![6(5).png](/commons/云原生/其他/image/6(5).png)
 
 实际上，流量不会路由到 Service，Ingress 控制器设置了 subscription，每次该 Service 的 endpoint 更改时都将收到通知，所以，Ingress 会将流量直接路由到 Pod，从而跳过 Service。可以想象，每次更改 Endpoint 对象时，Ingress 都会检索 IP 地址和 endpoint 新列表，并将控制器重新配置。现在我们快速回顾一下创建 Pod 时发生的过程：1.Pod 先存储在 etcd 中。2.调度程序会分配一个节点，再将节点写入 etcd。3.向 kubelet 通知有个新 Pod。4.kubelet 将创建容器的任务给CRI。5.kubelet 将容器附加到 CNI。6.kubelet 将容器中的卷委派给 CSI。7.CNI 分配 IP 地址。8.Kubelet 将 IP 地址通知给控制平面。9.IP 地址存储在 etcd 中。如果我们的 Pod 属于 Service：1.Kubelet 等待 Readiness 探针成功。2.对所有相关的 Endpoint 对象更改进行通知。3.Endpoint 将新 endpoint（IP 地址 + 端口）添加到列表中。4.Kube-proxy 被通知 Endpoint 更改，然后 Kube-proxy 会更新每个节点上的 iptables 规则。5.Ingress 控制器被通知 Endpoint 变化，然后控制器会将流量路由到新的 IP 地址。6.CoreDNS 被通知 Endpoint 更改。如果服务的类型为 Headless，DNS 会进行更新。7.云提供商被通知 Endpoint 更改。如果 Service 是 type: LoadBalancer，新的 endpoint 配置会是负载均衡池的一部分。8.集群中安装的所有服务网格也会被通知 Endpoint 更改。9.订阅 Endpoint 更改的其他运营商也会收到通知。虽然列表很长，实际上这就是一项常见任务：创建一个 Pod。Pod 已经成功运行了，下面我们讨论删除时会发生什么。
 
@@ -111,7 +111,7 @@ Ingress 控制器也使用相同的 endpiont 列表。Ingress 控制器是集群
 
 当 Pod 在 kube-proxy 或 Ingress 控制器删除之前终止，我们可能会遇到停机时间。此时，Kubernetes 仍将流量路由到 IP 地址，但 Pod 已经不存在了。Ingress 控制器、kube-proxy、CoreDNS 等也没有足够的时间从其内部状态中删除 IP地址。
 理想情况下，在删除 Pod 之前，Kubernetes 应该等待集群中的所有组件更新了 endpoint 列表，但是 Kubernetes 不是那样工作的。Kubernetes 提供了原语来分发 endpoint（即 Endpoint 对象和更高级的抽象，例如 Endpoint Slices），所以 Kubernetes 不会验证订阅 endpoint 更改的组件是否是最新的集群状态信息。那么，如何避免这种竞争情况并确保在 endpoint 广播之后删除 Pod？我们需要等待，当 Pod 即将被删除时，它会收到 SIGTERM 信号。我们的应用程序可以捕获该信号并开始关闭。由于 endpoint 不会立即从 Kubernetes 的所有组件中删除，所以我们可以：1.请稍等片刻，然后退出。2.即便有 SIGTERM 信号，但仍然可以处理传入流量。3.最后，关闭现有的长期连接。4.关闭该进程。那么我们应该等多久？默认情况下，Kubernetes 将发送 SIGTERM 信号并等待 30 秒，然后强制终止该进程。因此，我们可以使用前 15 秒继续操作。该间隔应足以将 endpoint 删除信息传播到 kube-proxy、Ingress 控制器、CoreDNS 等，然后，到达 Pod 的流量会越来越少，直到停止。15 秒后，我们就可以安全地关闭与数据库的连接并终止该过程。如果我们认为需要更多时间，那么可以在 20 或 25 秒时停止该过程。这里有一点要注意，Kubernetes 将在 30 秒后强行终止该进程（除非我们更改 Pod 定义中的 terminationGracePeriodSeconds）。如果我们无法更改代码以获得更长的等待时间要怎么办？我们可以调用脚本以获得固定的等待时间，然后退出应用程序。在调用 SIGTERM 之前，Kubernetes 会在 Pod 中公开一个 preStop hook。我们可以将 preStop hook 设置为等待 15 秒。下面是一个例子：
-![6(6).png](/commonts/云原生/其他/image/6(6).png)
+![6(6).png](/commons/云原生/其他/image/6(6).png)
 
 preStop hook 是 Pod LifeCycle hook 之一。
 
@@ -122,7 +122,7 @@ preStop hook 是 Pod LifeCycle hook 之一。
 优雅停机适用于要删除的 Pod，但如果我们不删除 Pod，会怎么样？其实即使我们不做，Kubernetes 也会删除 Pod。在每次部署较新版本的应用程序时，Kubernetes 都会创建、删除 Pod。
 
 在 Deployment 中更改镜像像时，Kubernetes 会逐步进行更改。
-![6(7).png](/commonts/云原生/其他/image/6(7).png)
+![6(7).png](/commons/云原生/其他/image/6(7).png)
 
 
 如果我们有三个副本，并提交新的 YAML 资源，Kubernetes 会：
