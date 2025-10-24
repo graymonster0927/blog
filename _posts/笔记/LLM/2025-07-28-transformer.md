@@ -86,33 +86,33 @@ X_src: [10, 512]  # 源句子，10个token，每个512维
 
 **投影变换：**
 
-$$
-Q = X W^Q,\quad K = X W^K,\quad V = X W^V \quad \text{→ shape: } [10, 512]
-$$
+  $$
+  Q = X W^Q,\quad K = X W^K,\quad V = X W^V \quad \text{→ shape: } [10, 512]
+  $$
 
 **拆分为多头：**
 
-$$
-Q_h, K_h, V_h ∈ [8, 10, 64]
-$$
+  $$
+  Q_h, K_h, V_h ∈ [8, 10, 64]
+  $$
 
 **注意力计算：**
 
-$$
-\text{Attention}_h = \text{softmax}(Q_h K_h^T / \sqrt{64}) V_h \quad → [8, 10, 64]
-$$
+  $$
+  \text{Attention}_h = \text{softmax}(Q_h K_h^T / \sqrt{64}) V_h \quad → [8, 10, 64]
+  $$
 
 **合并多头：**
 
-$$
-\text{Concat}_{h=1}^8 → [10, 512]
-$$
+  $$
+  \text{Concat}_{h=1}^8 → [10, 512]
+  $$
 
 **输出线性变换：**
 
-$$
-O = \text{Concat}(...) W^O ∈ [10, 512]
-$$
+  $$
+  O = \text{Concat}(...) W^O ∈ [10, 512]
+  $$
 
 ---
 
